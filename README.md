@@ -7,3 +7,6 @@ compare it against KSM. I needed a more current implementation of UKSM to compar
 to KSM. I ported this UKSM patch to more current releases. If you use the patches,
 please add some reference to this repository.
 
+| Version | Changes                       | Testing         |
+|---------|-------------------------------|-----------------|
+| 5.18    | Some minor changes for folios | Basic testing   |
