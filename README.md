@@ -13,7 +13,7 @@ please add some reference to this repository.
 |---------|-----------------------------------|---------------------------------|
 | 5.18    | 15 hunks changed, difficulty: low | Basic testing                   |
 | 5.19    | 10 hunks changed, difficulty: med | Used for long-term perf testing |
-| 6.0     | Some minor makefile changes       |                                 |
+| 6.0     | 1 hunk, difficulty: easy          | Basic testing                   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -58,3 +58,6 @@ If all goes well all hunks are applied. Just compile and install the kernel.
 - replace_page(): last parameter to page_add_anon_rmap() must be RMAP_NONE
 - try_merge_rmap_item: last parameter to page_add_anon_rmap() must be RMAP_NONE
 - rmap_walk_ksm(): add anon_vma_trylock_read() handling
+
+## 6.0
+- lib/Makefile: Manually apply one hunk
