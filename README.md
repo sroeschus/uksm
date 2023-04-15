@@ -50,3 +50,13 @@ If all goes well all hunks are applied. Just compile and install the kernel.
 - rmap_walk_ksm(): VM_BUG_ON_PAGE needs to use folios
 - rmap_walk_ksm(): rmap_one() and rmap_done() expects folio parameter
 - ksm_might_need_to_copy(): anon_vma needs to use folio
+
+## 5.19
+- page_stable_node(): removed
+- set_page_stable_node(): removed
+- zap_pte_range(): hunk for call to uksm_map_zero_page() does not cleanly apply
+- rmap_walk_ksm(): remove const from second argument in function signature
+- write_protect_page(): add anon_exclusive handling
+- replace_page(): last parameter to page_add_anon_rmap() must be RMAP_NONE
+- try_merge_rmap_item: last parameter to page_add_anon_rmap() must be RMAP_NONE
+- rmap_walk_ksm(): add anon_vma_trylock_read() handling
