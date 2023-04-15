@@ -28,7 +28,7 @@ from upstream. The patches might apply cleanly or not.
 How to apply the patch? You need to have a source with the kernel sources, then
 the patch can applied with the patch command. For instance:
 
-patch -p1 < ~/uksm/v5.x/uksm-5.19.patch
+patch -p1 < ~/uksm/v6.x/uksm-6.0.patch
 
 This should output something like this:
 ```
