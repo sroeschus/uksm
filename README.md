@@ -12,9 +12,7 @@ please add some reference to this repository.
 | Version | Changes / Number of hunks         | Testing                         |
 |---------|-----------------------------------|---------------------------------|
 | 5.18    | 15 hunks changed, difficulty: low | Basic testing                   |
-| 5.19    | Some minor changes for folios     | Used for long-term perf testing |
-|         | Changes to rmap                   |                                 |
-|         | Changes to anon vma lock handling |                                 |
+| 5.19    | 10 hunks changed, difficulty: med | Used for long-term perf testing |
 | 6.0     | Some minor makefile changes       |                                 |
 
 The Changes column contains the changes compared to the previous version. The
