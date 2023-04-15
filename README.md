@@ -30,7 +30,37 @@ the patch can applied with the patch command. For instance:
 
 patch -p1 < ~/uksm/v5.x/uksm-5.19.patch
 
-If all goes well all hunks are applied. Just compile and install the kernel.
+This should output something like this:
+```
+patch -p1 < ~/uksm/v6.x/uksm-v6.0.patch
+patching file Documentation/vm/uksm.txt
+patching file fs/exec.c
+patching file fs/proc/meminfo.c
+patching file include/linux/ksm.h
+patching file include/linux/mm_types.h
+patching file include/linux/mmzone.h
+patching file include/linux/pgtable.h
+patching file include/linux/sradix-tree.h
+patching file include/linux/uksm.h
+patching file kernel/fork.c
+patching file lib/Makefile
+patching file lib/sradix-tree.c
+patching file mm/Kconfig
+patching file mm/Makefile
+patching file mm/ksm.c
+patching file mm/memory.c
+patching file mm/mmap.c
+patching file mm/uksm.c
+patching file mm/vmstat.c
+```
+
+If all goes well all hunks are applied. Just compile and install the kernel (this assumes you
+have a valid kernel config file).
+
+```
+make clean
+make -j$(nproc)
+```
 
 # Changes
 ## 5.18
