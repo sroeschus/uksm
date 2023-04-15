@@ -1,7 +1,7 @@
-From ac960f84a7da870e7ff28b66c804255d8cced519 Mon Sep 17 00:00:00 2001
+From 1bd43efe8da24ebf5bc456ca1e17c6bcdcaedf54 Mon Sep 17 00:00:00 2001
 From: Stefan Roesch <shr@devkernel.io>
-Date: Tue, 4 Apr 2023 20:45:22 -0700
-Subject: [PATCH] mm: uksm
+Date: Fri, 14 Apr 2023 20:41:47 -0700
+Subject: [PATCH] mm: uksm 5.18
 
 ---
  Documentation/vm/uksm.txt   |   61 +
@@ -21,9 +21,9 @@ Subject: [PATCH] mm: uksm
  mm/ksm.c                    |   11 -
  mm/memory.c                 |   33 +-
  mm/mmap.c                   |   28 +
- mm/uksm.c                   | 5630 +++++++++++++++++++++++++++++++++++
+ mm/uksm.c                   | 5603 +++++++++++++++++++++++++++++++++++
  mm/vmstat.c                 |    3 +
- 19 files changed, 6546 insertions(+), 26 deletions(-)
+ 19 files changed, 6519 insertions(+), 26 deletions(-)
  create mode 100644 Documentation/vm/uksm.txt
  create mode 100644 include/linux/sradix-tree.h
  create mode 100644 include/linux/uksm.h
@@ -1317,10 +1317,10 @@ index 313b57d55a63..031c500d5efd 100644
  
 diff --git a/mm/uksm.c b/mm/uksm.c
 new file mode 100644
-index 000000000000..4670317a412d
+index 000000000000..24bc524b93fe
 --- /dev/null
 +++ b/mm/uksm.c
-@@ -0,0 +1,5630 @@
+@@ -0,0 +1,5603 @@
 +/*
 + * Ultra KSM. Copyright (C) 2011-2012 Nai Xia
 + *
@@ -2816,24 +2816,19 @@ index 000000000000..4670317a412d
 +			      pte_t *orig_pte, pte_t *old_pte)
 +{
 +	struct mm_struct *mm = vma->vm_mm;
-+	// struct page_vma_mapped_walk pvmw = {
-+	// 	.page = page,
-+	// 	.vma = vma,
-+	// };
 +	unsigned long address = page_address_in_vma(page, vma);
 +	DEFINE_FOLIO_VMA_WALK(pvmw, page_folio(page), vma, address, 0);
-+       struct mmu_notifier_range range;
++	struct mmu_notifier_range range;
 +	int swapped;
 +	int err = -EFAULT;
 +
-+	// pvmw.address = page_address_in_vma(page, vma);
 +	if (pvmw.address == -EFAULT)
 +		goto out;
 +
 +	BUG_ON(PageTransCompound(page));
 +
-+        mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, pvmw.address,
-+                                pvmw.address + PAGE_SIZE);
++	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, pvmw.address,
++				pvmw.address + PAGE_SIZE);
 +	mmu_notifier_invalidate_range_start(&range);
 +
 +	if (!page_vma_mapped_walk(&pvmw))
@@ -2908,7 +2903,7 @@ index 000000000000..4670317a412d
 +			struct page *kpage, pte_t orig_pte)
 +{
 +	struct mm_struct *mm = vma->vm_mm;
-+       struct mmu_notifier_range range;
++	struct mmu_notifier_range range;
 +	pgd_t *pgd;
 +	p4d_t *p4d;
 +	pud_t *pud;
@@ -3101,11 +3096,9 @@ index 000000000000..4670317a412d
 +	}
 +
 +	if ((vma->vm_flags & VM_LOCKED) && kpage && !err) {
-+		//munlock_vma_page(page);
 +		if (!PageMlocked(kpage)) {
 +			unlock_page(page);
 +			lock_page(kpage);
-+			//mlock_vma_page(kpage);
 +			page = kpage;		/* for final unlock */
 +		}
 +	}
@@ -3260,11 +3253,9 @@ index 000000000000..4670317a412d
 +		}
 +
 +		if ((vma2->vm_flags & VM_LOCKED)) {
-+			//munlock_vma_page(tree_page);
 +			if (!PageMlocked(page)) {
 +				unlock_page(tree_page);
 +				lock_page(page);
-+				//mlock_vma_page(page);
 +				tree_page = page; /* for final unlock */
 +			}
 +		}
@@ -3416,12 +3407,7 @@ index 000000000000..4670317a412d
 +	struct vm_area_struct *vma = item->slot->vma;
 +	unsigned long address = get_rmap_addr(item);
 +	DEFINE_FOLIO_VMA_WALK(pvmw, page_folio(kpage), vma, address, 0);
-+	// struct page_vma_mapped_walk pvmw = {
-+	// 	.page = kpage,
-+	// 	.vma = vma,
-+	// };
 +
-+	// pvmw.address = get_rmap_addr(item);
 +	if (!page_vma_mapped_walk(&pvmw))
 +		return 0;
 +
@@ -3466,8 +3452,6 @@ index 000000000000..4670317a412d
 +				  struct page *tree_page,
 +				  int *success1, int *success2)
 +{
-+	// struct vm_area_struct *vma1 = item1->slot->vma;
-+	// struct vm_area_struct *vma2 = item2->slot->vma;
 +	*success1 = 0;
 +	*success2 = 0;
 +
@@ -3503,14 +3487,6 @@ index 000000000000..4670317a412d
 +	*success2 = 1;
 +success_1:
 +	*success1 = 1;
-+
-+
-+	// if ((*success1 && vma1->vm_flags & VM_LOCKED) ||
-+	//     (*success2 && vma2->vm_flags & VM_LOCKED)) {
-+	// 	munlock_vma_page(*kpage);
-+	// 	if (!PageMlocked(tree_page))
-+	// 		mlock_vma_page(tree_page);
-+	// }
 +
 +	/*
 +	 * We do not need oldpage any more in the caller, so can break the lock
@@ -6043,10 +6019,9 @@ index 000000000000..4670317a412d
 +	int search_new_forks = 0;
 +	unsigned long address;
 +
-+	VM_BUG_ON_PAGE(!PageKsm(&folio->page), folio->page);
-+	VM_BUG_ON_PAGE(!PageLocked(&folio->page), folio->page);
++	VM_BUG_ON_PAGE(!PageKsm(&folio->page), &folio->page);
++	VM_BUG_ON_PAGE(!PageLocked(&folio->page), &folio->page);
 +
-+	// stable_node = page_stable_node(page);
 +	stable_node = folio_stable_node(folio);
 +	if (!stable_node)
 +		return;
@@ -6076,13 +6051,11 @@ index 000000000000..4670317a412d
 +				if (rwc->invalid_vma && rwc->invalid_vma(vma, rwc->arg))
 +					continue;
 +
-+				// if (!rwc->rmap_one(page, vma, address, rwc->arg)) {
 +				if (!rwc->rmap_one(folio, vma, address, rwc->arg)) {
 +					anon_vma_unlock_read(anon_vma);
 +					return;
 +				}
 +
-+				// if (rwc->done && rwc->done(page)) {
 +				if (rwc->done && rwc->done(folio)) {
 +					anon_vma_unlock_read(anon_vma);
 +					return;
@@ -6966,5 +6939,5 @@ index b75b1a64b54c..56b484dbfb74 100644
  	"nr_dirty_threshold",
  	"nr_dirty_background_threshold",
 -- 
-2.34.1
+2.31.1
 
