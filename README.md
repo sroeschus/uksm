@@ -1,6 +1,7 @@
 # uksm
 The uksm were orginally maintained in [this](https://github.com/dolohow/uksm) repository.
-However it looks like the most recent patch has been for 5.17.
+However it looks like the most recent patch has been for 5.17. This repository contains
+versions of the uksm patch for more recent versions.
 
 # Why?
 I'm currently working at Meta on improving KSM. I'm using the UKSM implementation to
