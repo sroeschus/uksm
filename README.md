@@ -17,7 +17,7 @@ please add some reference to this repository.
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
-means that the kernel has been started and used for 30 minutes.
+means that the kernel has been started and used for 30 - 60 minutes.
 
 # Disclaimer
 Use the patches at your own risk. The patches have been prepared for the kernels
