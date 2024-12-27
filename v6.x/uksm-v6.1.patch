@@ -1,4 +1,4 @@
-From 2cd96176eb85f41524d1a6e27682781ff8686c5f Mon Sep 17 00:00:00 2001
+From 064b9451112a8d0f1370f53bb3d7b24f0c3ce1a9 Mon Sep 17 00:00:00 2001
 From: Stefan Roesch <shr@devkernel.io>
 Date: Sat, 15 Apr 2023 14:20:09 -0700
 Subject: [PATCH] mm: uksm-v6.0
@@ -21,9 +21,9 @@ Subject: [PATCH] mm: uksm-v6.0
  mm/ksm.c                    |   12 -
  mm/memory.c                 |   33 +-
  mm/mmap.c                   |   38 +-
- mm/uksm.c                   | 5638 +++++++++++++++++++++++++++++++++++
+ mm/uksm.c                   | 5626 +++++++++++++++++++++++++++++++++++
  mm/vmstat.c                 |    3 +
- 19 files changed, 6565 insertions(+), 27 deletions(-)
+ 19 files changed, 6553 insertions(+), 27 deletions(-)
  create mode 100644 Documentation/vm/uksm.txt
  create mode 100644 include/linux/sradix-tree.h
  create mode 100644 include/linux/uksm.h
@@ -1367,10 +1367,10 @@ index 54abd46e6007..d29d311972da 100644
  	return vma;
 diff --git a/mm/uksm.c b/mm/uksm.c
 new file mode 100644
-index 000000000000..8ea30cbc14f3
+index 000000000000..2d63b330e973
 --- /dev/null
 +++ b/mm/uksm.c
-@@ -0,0 +1,5638 @@
+@@ -0,0 +1,5626 @@
 +/*
 + * Ultra KSM. Copyright (C) 2011-2012 Nai Xia
 + *
@@ -2486,13 +2486,6 @@ index 000000000000..8ea30cbc14f3
 +		free_vma_slot(slot);
 +	}
 +
-+	// pr_warn("uksm_remove_vma: <%s>: vma = %p, pages = %lu, vm_pages = %lu\n",
-+	// 		where, vma, pages, vm_pages);
-+
-+	if (pages != vm_pages) {
-+		pr_warn("==> uksm_remove_vma: incorr pages <%s>: vma = %p, pages = %lu, vm_pages = %lu\n",
-+			where, vma, pages, vm_pages);
-+	}
 +	BUG_ON(pages != vm_pages);
 +out:
 +	vma->uksm_vma_slot = NULL;
@@ -2658,8 +2651,6 @@ index 000000000000..8ea30cbc14f3
 +	spin_lock(&vma_slot_list_lock);
 +	list_add_tail(&slot->slot_list, &vma_slot_new);
 +	spin_unlock(&vma_slot_list_lock);
-+
-+	// pr_warn("uksm_add_vma_new: vma = %p, vm_pages = %lu\n", vma, vma_pages(vma));
 +}
 +
 +/*   32/3 < they < 32/2 */
@@ -4375,11 +4366,8 @@ index 000000000000..8ea30cbc14f3
 +	unsigned long pool_index;
 +
 +	pool_index = (sizeof(struct rmap_list_entry *) * index) >> PAGE_SHIFT;
-+	if (pool_index >= slot->pool_size) {
-+		pr_warn("get_pool_index: vma = %p, pool_index = %lu, pool_size = %lu\n",
-+			slot->vma, pool_index, slot->pool_size);
++	if (pool_index >= slot->pool_size)
 +		BUG();
-+	}
 +	return pool_index;
 +}
 +
