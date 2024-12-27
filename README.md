@@ -15,6 +15,7 @@ please add some reference to this repository.
 | 5.18    | 15 hunks changed, difficulty: low | Basic testing                   |
 | 5.19    | 10 hunks changed, difficulty: med | Used for long-term perf testing |
 | 6.0     | 1 hunk, difficulty: easy          | Basic testing                   |
+| 6.1     | 15 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -92,3 +93,19 @@ make -j$(nproc)
 
 ## 6.0
 - lib/Makefile: Manually apply one hunk
+
+## 6.1
+Considerable changes in memory management due to the introduction of the maple tree.
+- include/linux/uksm.h: renamed uksm_vma_add_new to uksm_add_vma_new()
+- kernel/fork.c: vm_area_free() no longer using __vma_link_rb()
+- kernel/fork.c: dup_mmap: using mas, requires additional call to uksm_add_vma_new()
+- lib/Makefile: Manually apply one hunk
+- mm/map.c: vma_expand() new calls to uksm_remove_vma() and uksm_add_vma_new()
+- mm/map.c: Changes due to maple_tree 
+- mm/map.c: __split_vma(): moving uksm_add_vma_new() call
+- mm/map.c: mmap_region(): added call to uksm_add_vma_new()
+- mm/map.c: do_brk_flags(): added call to uksm_remove_vma()
+- mm/map.c: exit_mmap(): removed invalidation
+- mm/uksm.c: Added BUG_ON to uksm_remove_vma() to catch bugs
+- mm/uksm.c: Use folio API's in replace_page()
+- mm/uksm.c: 3 hunks, replace prandom_u32() with get_random_u32()
