@@ -16,10 +16,14 @@ please add some reference to this repository.
 | 5.19    | 10 hunks changed, difficulty: med | Used for long-term perf testing |
 | 6.0     | 1 hunk, difficulty: easy          | Basic testing                   |
 | 6.1     | 15 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
+| 6.2     | 4 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
 means that the kernel has been started and used for 30 - 60 minutes.
+
+On the later kernels I use a modified version of the test program ksm_tests.c.
+In addition I run a kernel build with one and eight CPU's to test the kernel.
 
 # Disclaimer
 Use the patches at your own risk. The patches have been prepared for the kernels
@@ -109,3 +113,11 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/uksm.c: Added BUG_ON to uksm_remove_vma() to catch bugs
 - mm/uksm.c: Use folio API's in replace_page()
 - mm/uksm.c: 3 hunks, replace prandom_u32() with get_random_u32()
+
+## 6.2
+- mm/uksm.c: replaced write_page() with updated api's
+- mm/uksm.c: replaced replace_page() with updated api's
+- fs/exec.c: fixed header conflict
+- mm/memory.c: fixed conflict with fast counters
+- mm/memory.c: fixed conflict with new copy_mc_user_highpage
+- mm/memory.c: fixed conflict with fast counters
