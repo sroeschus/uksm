@@ -1,4 +1,4 @@
-From 064b9451112a8d0f1370f53bb3d7b24f0c3ce1a9 Mon Sep 17 00:00:00 2001
+From 9a3dbdebae1141506f89b67d57156fd803c9ab83 Mon Sep 17 00:00:00 2001
 From: Stefan Roesch <shr@devkernel.io>
 Date: Sat, 15 Apr 2023 14:20:09 -0700
 Subject: [PATCH] mm: uksm-v6.0
@@ -13,7 +13,7 @@ Subject: [PATCH] mm: uksm-v6.0
  include/linux/pgtable.h     |   17 +-
  include/linux/sradix-tree.h |   77 +
  include/linux/uksm.h        |  149 +
- kernel/fork.c               |    3 +
+ kernel/fork.c               |    5 +
  lib/Makefile                |    2 +-
  lib/sradix-tree.c           |  476 +++
  mm/Kconfig                  |   26 +
@@ -23,7 +23,7 @@ Subject: [PATCH] mm: uksm-v6.0
  mm/mmap.c                   |   38 +-
  mm/uksm.c                   | 5626 +++++++++++++++++++++++++++++++++++
  mm/vmstat.c                 |    3 +
- 19 files changed, 6553 insertions(+), 27 deletions(-)
+ 19 files changed, 6555 insertions(+), 27 deletions(-)
  create mode 100644 Documentation/vm/uksm.txt
  create mode 100644 include/linux/sradix-tree.h
  create mode 100644 include/linux/uksm.h
@@ -125,7 +125,7 @@ index 440960110a42..8bfc0311e1e7 100644
  	show_val_kb(m, "NFS_Unstable:   ", 0);
  	show_val_kb(m, "Bounce:         ",
 diff --git a/include/linux/ksm.h b/include/linux/ksm.h
-index 7e232ba59b86..548d76d5ad50 100644
+index 7e232ba59b86..245a04a4d132 100644
 --- a/include/linux/ksm.h
 +++ b/include/linux/ksm.h
 @@ -18,20 +18,16 @@
@@ -136,7 +136,7 @@ index 7e232ba59b86..548d76d5ad50 100644
 -void __ksm_exit(struct mm_struct *mm);
  
 -static inline int ksm_fork(struct mm_struct *mm, struct mm_struct *oldmm)
-+static inline struct stable_node *page_stable_node(struct page *page)
++static inline struct ksm_stable_node *page_stable_node(struct page *page)
  {
 -	if (test_bit(MMF_VM_MERGEABLE, &oldmm->flags))
 -		return __ksm_enter(mm);
@@ -146,7 +146,7 @@ index 7e232ba59b86..548d76d5ad50 100644
  
 -static inline void ksm_exit(struct mm_struct *mm)
 +static inline void set_page_stable_node(struct page *page,
-+					struct stable_node *stable_node)
++					struct ksm_stable_node *stable_node)
  {
 -	if (test_bit(MMF_VM_MERGEABLE, &mm->flags))
 -		__ksm_exit(mm);
@@ -503,19 +503,21 @@ index 000000000000..0bfa28ab9175
 +#endif /* !CONFIG_UKSM */
 +#endif /* __LINUX_UKSM_H */
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 08969f5aa38d..ef2bd1fffe76 100644
+index 08969f5aa38d..f4b5342a2d14 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -481,6 +481,8 @@ struct vm_area_struct *vm_area_dup(struct vm_area_struct *orig)
+@@ -481,6 +481,10 @@ struct vm_area_struct *vm_area_dup(struct vm_area_struct *orig)
  
  void vm_area_free(struct vm_area_struct *vma)
  {
++#ifdef CONFIG_UKSM
 +	BUG_ON(vma->uksm_vma_slot != NULL);
++#endif
 +
  	free_anon_vma_name(vma);
  	kmem_cache_free(vm_area_cachep, vma);
  }
-@@ -686,6 +688,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
+@@ -686,6 +690,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
  		if (mas_is_err(&mas))
  			goto fail_nomem_mas_store;
  
@@ -1367,7 +1369,7 @@ index 54abd46e6007..d29d311972da 100644
  	return vma;
 diff --git a/mm/uksm.c b/mm/uksm.c
 new file mode 100644
-index 000000000000..2d63b330e973
+index 000000000000..cb50304538c4
 --- /dev/null
 +++ b/mm/uksm.c
 @@ -0,0 +1,5626 @@
@@ -1739,12 +1741,12 @@ index 000000000000..2d63b330e973
 +};
 +
 +/**
-+ * struct stable_node - node of the stable rbtree
++ * struct ksm_stable_node - node of the stable rbtree
 + * @node: rb node of this ksm page in the stable tree
 + * @hlist: hlist head of rmap_items using this ksm page
 + * @kpfn: page frame number of this ksm page
 + */
-+struct stable_node {
++struct ksm_stable_node {
 +	struct rb_node node; /* link in sub-rbtree */
 +	struct tree_node *tree_node; /* it's tree node root in stable tree, NULL if it's in hell list */
 +	struct hlist_head hlist;
@@ -1764,7 +1766,7 @@ index 000000000000..2d63b330e973
 +	};
 +	struct hlist_node hlist;
 +	struct hlist_head rmap_hlist;
-+	struct stable_node *head;
++	struct ksm_stable_node *head;
 +};
 +
 +/**
@@ -2126,9 +2128,9 @@ index 000000000000..2d63b330e973
 +	kmem_cache_free(rmap_item_cache, rmap_item);
 +}
 +
-+static inline struct stable_node *alloc_stable_node(void)
++static inline struct ksm_stable_node *alloc_stable_node(void)
 +{
-+	struct stable_node *node;
++	struct ksm_stable_node *node;
 +
 +	node = kmem_cache_alloc(stable_node_cache, GFP_KERNEL |
 +				__GFP_NORETRY | __GFP_NOWARN);
@@ -2140,7 +2142,7 @@ index 000000000000..2d63b330e973
 +	return node;
 +}
 +
-+static inline void free_stable_node(struct stable_node *stable_node)
++static inline void free_stable_node(struct ksm_stable_node *stable_node)
 +{
 +	list_del(&stable_node->all_list);
 +	kmem_cache_free(stable_node_cache, stable_node);
@@ -2181,7 +2183,7 @@ index 000000000000..2d63b330e973
 + * @unlink_rb	    Will this node be unlinked from the rbtree?
 + * @remove_tree_    node Will its tree_node be removed if empty?
 + */
-+static void remove_node_from_stable_tree(struct stable_node *stable_node,
++static void remove_node_from_stable_tree(struct ksm_stable_node *stable_node,
 +					 int unlink_rb,  int remove_tree_node)
 +{
 +	struct node_vma *node_vma;
@@ -2261,7 +2263,7 @@ index 000000000000..2d63b330e973
 + * tree_node be freed ? If we are inserting stable node, this tree_node may
 + * be reused, so don't free it.
 + */
-+static struct page *get_uksm_page(struct stable_node *stable_node,
++static struct page *get_uksm_page(struct ksm_stable_node *stable_node,
 +				 int unlink_rb, int remove_tree_node)
 +{
 +	struct page *page;
@@ -2343,7 +2345,7 @@ index 000000000000..2d63b330e973
 +static inline void remove_rmap_item_from_tree(struct rmap_item *rmap_item)
 +{
 +	if (rmap_item->address & STABLE_FLAG) {
-+		struct stable_node *stable_node;
++		struct ksm_stable_node *stable_node;
 +		struct node_vma *node_vma;
 +		struct page *page;
 +
@@ -3398,7 +3400,7 @@ index 000000000000..2d63b330e973
 +	struct tree_node *tree_node;
 +	unsigned long hash_max;
 +	struct page *page = item->page;
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +
 +	stable_node = page_stable_node(page);
 +	if (stable_node) {
@@ -3430,7 +3432,7 @@ index 000000000000..2d63b330e973
 +
 +	if (tree_node->count == 1) {
 +		stable_node = rb_entry(tree_node->sub_root.rb_node,
-+				       struct stable_node, node);
++				       struct ksm_stable_node, node);
 +		BUG_ON(!stable_node);
 +
 +		goto get_page_out;
@@ -3448,7 +3450,7 @@ index 000000000000..2d63b330e973
 +	while (node) {
 +		int cmp;
 +
-+		stable_node = rb_entry(node, struct stable_node, node);
++		stable_node = rb_entry(node, struct ksm_stable_node, node);
 +
 +		cmp = hash_cmp(hash_max, stable_node->hash_max);
 +
@@ -3569,7 +3571,7 @@ index 000000000000..2d63b330e973
 +	return;
 +}
 +
-+static inline void stable_node_hash_max(struct stable_node *node,
++static inline void stable_node_hash_max(struct ksm_stable_node *node,
 +					 struct page *page, u32 hash)
 +{
 +	u32 hash_max = node->hash_max;
@@ -3581,10 +3583,10 @@ index 000000000000..2d63b330e973
 +}
 +
 +static inline
-+struct stable_node *new_stable_node(struct tree_node *tree_node,
-+				    struct page *kpage, u32 hash_max)
++struct ksm_stable_node *new_stable_node(struct tree_node *tree_node,
++				        struct page *kpage, u32 hash_max)
 +{
-+	struct stable_node *new_stable_node;
++	struct ksm_stable_node *new_stable_node;
 +
 +	new_stable_node = alloc_stable_node();
 +	if (!new_stable_node)
@@ -3599,21 +3601,21 @@ index 000000000000..2d63b330e973
 +}
 +
 +static inline
-+struct stable_node *first_level_insert(struct tree_node *tree_node,
-+				       struct rmap_item *rmap_item,
-+				       struct rmap_item *tree_rmap_item,
-+				       struct page **kpage, u32 hash,
-+				       int *success1, int *success2)
++struct ksm_stable_node *first_level_insert(struct tree_node *tree_node,
++				           struct rmap_item *rmap_item,
++				           struct rmap_item *tree_rmap_item,
++				           struct page **kpage, u32 hash,
++				           int *success1, int *success2)
 +{
 +	int cmp;
 +	struct page *tree_page;
 +	u32 hash_max = 0;
-+	struct stable_node *stable_node, *new_snode;
++	struct ksm_stable_node *stable_node, *new_snode;
 +	struct rb_node *parent = NULL, **new;
 +
 +	/* this tree node contains no sub-tree yet */
 +	stable_node = rb_entry(tree_node->sub_root.rb_node,
-+			       struct stable_node, node);
++			       struct ksm_stable_node, node);
 +
 +	tree_page = get_uksm_page(stable_node, 1, 0);
 +	if (tree_page) {
@@ -3671,15 +3673,15 @@ index 000000000000..2d63b330e973
 +}
 +
 +static inline
-+struct stable_node *stable_subtree_insert(struct tree_node *tree_node,
-+					  struct rmap_item *rmap_item,
-+					  struct rmap_item *tree_rmap_item,
-+					  struct page **kpage, u32 hash,
-+					  int *success1, int *success2)
++struct ksm_stable_node *stable_subtree_insert(struct tree_node *tree_node,
++					      struct rmap_item *rmap_item,
++					      struct rmap_item *tree_rmap_item,
++					      struct page **kpage, u32 hash,
++					      int *success1, int *success2)
 +{
 +	struct page *tree_page;
 +	u32 hash_max;
-+	struct stable_node *stable_node, *new_snode;
++	struct ksm_stable_node *stable_node, *new_snode;
 +	struct rb_node *parent, **new;
 +
 +research:
@@ -3690,7 +3692,7 @@ index 000000000000..2d63b330e973
 +	while (*new) {
 +		int cmp;
 +
-+		stable_node = rb_entry(*new, struct stable_node, node);
++		stable_node = rb_entry(*new, struct ksm_stable_node, node);
 +
 +		cmp = hash_cmp(hash_max, stable_node->hash_max);
 +
@@ -3770,7 +3772,7 @@ index 000000000000..2d63b330e973
 + *			rmap_item is inserted into stable tree, NULL
 + *			otherwise.
 + */
-+static struct stable_node *
++static struct ksm_stable_node *
 +stable_tree_insert(struct page **kpage, u32 hash,
 +		   struct rmap_item *rmap_item,
 +		   struct rmap_item *tree_rmap_item,
@@ -3778,7 +3780,7 @@ index 000000000000..2d63b330e973
 +{
 +	struct rb_node **new = &root_stable_treep->rb_node;
 +	struct rb_node *parent = NULL;
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +	struct tree_node *tree_node;
 +	u32 hash_max = 0;
 +
@@ -3974,7 +3976,7 @@ index 000000000000..2d63b330e973
 + *
 + */
 +static void stable_tree_append(struct rmap_item *rmap_item,
-+			       struct stable_node *stable_node, int logdedup)
++			       struct ksm_stable_node *stable_node, int logdedup)
 +{
 +	struct node_vma *node_vma = NULL, *new_node_vma, *node_vma_cont = NULL;
 +	unsigned long key = (unsigned long)rmap_item->slot;
@@ -4153,7 +4155,7 @@ index 000000000000..2d63b330e973
 +	return err;
 +}
 +
-+static inline struct stable_node *folio_stable_node(struct folio *folio)
++static inline struct ksm_stable_node *folio_stable_node(struct folio *folio)
 +{
 +	return folio_test_ksm(folio) ? folio_raw_mapping(folio) : NULL;
 +}
@@ -4238,7 +4240,7 @@ index 000000000000..2d63b330e973
 +	u32 hash_max;
 +	int err;
 +	unsigned int success1, success2;
-+	struct stable_node *snode;
++	struct ksm_stable_node *snode;
 +	int cmp;
 +	struct rb_node *parent = NULL, **new;
 +
@@ -5080,7 +5082,7 @@ index 000000000000..2d63b330e973
 + * stable tree need to be restructured, this is the function re-inserting the
 + * stable node.
 + */
-+static inline void stable_node_reinsert(struct stable_node *new_node,
++static inline void stable_node_reinsert(struct ksm_stable_node *new_node,
 +					struct page *page,
 +					struct rb_root *root_treep,
 +					struct list_head *tree_node_listp,
@@ -5088,7 +5090,7 @@ index 000000000000..2d63b330e973
 +{
 +	struct rb_node **new = &root_treep->rb_node;
 +	struct rb_node *parent = NULL;
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +	struct tree_node *tree_node;
 +	struct page *tree_page;
 +	int cmp;
@@ -5115,7 +5117,7 @@ index 000000000000..2d63b330e973
 +		stable_node_hash_max(new_node, page, hash);
 +		if (tree_node->count == 1) {
 +			stable_node = rb_entry(tree_node->sub_root.rb_node,
-+					       struct stable_node, node);
++					       struct ksm_stable_node, node);
 +			tree_page = get_uksm_page(stable_node, 1, 0);
 +			if (tree_page) {
 +				stable_node_hash_max(stable_node,
@@ -5150,7 +5152,7 @@ index 000000000000..2d63b330e973
 +		while (*new) {
 +			int cmp;
 +
-+			stable_node = rb_entry(*new, struct stable_node, node);
++			stable_node = rb_entry(*new, struct ksm_stable_node, node);
 +
 +			cmp = hash_cmp(new_node->hash_max,
 +					   stable_node->hash_max);
@@ -5216,7 +5218,7 @@ index 000000000000..2d63b330e973
 + */
 +static inline void stable_tree_delta_hash(u32 prev_hash_strength)
 +{
-+	struct stable_node *node, *tmp;
++	struct ksm_stable_node *node, *tmp;
 +	struct rb_root *root_new_treep;
 +	struct list_head *new_tree_node_listp;
 +
@@ -6080,7 +6082,7 @@ index 000000000000..2d63b330e973
 +
 +void rmap_walk_ksm(struct folio *folio, struct rmap_walk_control *rwc)
 +{
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +	struct node_vma *node_vma;
 +	struct rmap_item *rmap_item;
 +	int search_new_forks = 0;
@@ -6145,7 +6147,7 @@ index 000000000000..2d63b330e973
 +/* Common ksm interface but may be specific to uksm */
 +void folio_migrate_ksm(struct folio *newfolio, struct folio *folio)
 +{
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +
 +	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
 +	VM_BUG_ON_FOLIO(!folio_test_locked(newfolio), newfolio);
@@ -6168,15 +6170,15 @@ index 000000000000..2d63b330e973
 +#endif /* CONFIG_MIGRATION */
 +
 +#ifdef CONFIG_MEMORY_HOTREMOVE
-+static struct stable_node *uksm_check_stable_tree(unsigned long start_pfn,
-+						 unsigned long end_pfn)
++static struct ksm_stable_node *uksm_check_stable_tree(unsigned long start_pfn,
++						      unsigned long end_pfn)
 +{
 +	struct rb_node *node;
 +
 +	for (node = rb_first(root_stable_treep); node; node = rb_next(node)) {
-+		struct stable_node *stable_node;
++		struct ksm_stable_node *stable_node;
 +
-+		stable_node = rb_entry(node, struct stable_node, node);
++		stable_node = rb_entry(node, struct ksm_stable_node, node);
 +		if (stable_node->kpfn >= start_pfn &&
 +		    stable_node->kpfn < end_pfn)
 +			return stable_node;
@@ -6188,7 +6190,7 @@ index 000000000000..2d63b330e973
 +			       unsigned long action, void *arg)
 +{
 +	struct memory_notify *mn = arg;
-+	struct stable_node *stable_node;
++	struct ksm_stable_node *stable_node;
 +
 +	switch (action) {
 +	case MEM_GOING_OFFLINE:
@@ -6803,7 +6805,7 @@ index 000000000000..2d63b330e973
 +	if (!rmap_item_cache)
 +		goto out;
 +
-+	stable_node_cache = UKSM_KMEM_CACHE(stable_node, 0);
++	stable_node_cache = UKSM_KMEM_CACHE(ksm_stable_node, 0);
 +	if (!stable_node_cache)
 +		goto out_free1;
 +
