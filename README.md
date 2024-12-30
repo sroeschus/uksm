@@ -18,6 +18,7 @@ please add some reference to this repository.
 | 6.1     | 15 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 | 6.2     | 4 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.3     | 8 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
+| 6.4     | 11 hunks, difficulty: easy        | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -130,3 +131,14 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/mmap.c: fixed 2 conflicts in vma_shrink(), this is a new function
 - mm/mmap.c: fixed conflict in __split_vma()
 - mm/mmap.c: fixed two conflicts in do_brk_flags()
+
+## 6.4
+- Added some new empty functions to uksm.c to silence linker
+- fs/exec.c: fixed conflict in include
+- include/linux/ksm.h: fixed 3 conflicts
+- kernel/fork.c: conflict in vm_area_dup()
+- kernel/fork.c: conflict in _vm_area_free()
+- mm/mmap.c: conflict in remove_vma()
+- mm/mmap.c: conflict in vma_expand()
+- mm/mmap.c: conflict in vma_merge()
+- mm/mmap.c: 2 conflicts in do_brk_flags()
