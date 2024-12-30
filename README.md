@@ -17,6 +17,7 @@ please add some reference to this repository.
 | 6.0     | 1 hunk, difficulty: easy          | Basic testing                   |
 | 6.1     | 15 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 | 6.2     | 4 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
+| 6.3     | 8 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -121,3 +122,11 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/memory.c: fixed conflict with fast counters
 - mm/memory.c: fixed conflict with new copy_mc_user_highpage
 - mm/memory.c: fixed conflict with fast counters
+
+## 6.3
+- A couple of changes to address the changes vma API's
+- mm/memory.c: fixed conflict in copy_present_pte()
+- mm/mmap.c: fixed 2 conflicts in vma_expand(), considerable changes to vma functions
+- mm/mmap.c: fixed 2 conflicts in vma_shrink(), this is a new function
+- mm/mmap.c: fixed conflict in __split_vma()
+- mm/mmap.c: fixed two conflicts in do_brk_flags()
