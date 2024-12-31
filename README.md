@@ -157,12 +157,12 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/mmap.c: Conflict in __split_vma()
 
 ## 6.6
-mm/ksm.h: move page_stable_node from ksm.h to ksm.c/uksm.c
-mm/ksm.h: move set_page_stable_node from ksm.h to ksm.c/uksm.c
-mm/ksm.h: define ksm_might_unmap_zero_page for CONFIG_UKSM
-mm/memory.c: Conflict in zap_pte_rang()
-mm/memory.c: Conflict in wp_page_copy()
-mm/mmap.c: 2 conflicts in vma_expand()
-mm/mmap.c: 3 conflicts in vma_shrink()
-mm/mmap.c: Conflict in __split_vma()
-mm/mmap.c: Conflict in do_brk_flags()
+- mm/ksm.h: move page_stable_node from ksm.h to ksm.c/uksm.c
+- mm/ksm.h: move set_page_stable_node from ksm.h to ksm.c/uksm.c
+- mm/ksm.h: define ksm_might_unmap_zero_page for CONFIG_UKSM
+- mm/memory.c: Conflict in zap_pte_rang()
+- mm/memory.c: Conflict in wp_page_copy()
+- mm/mmap.c: 2 conflicts in vma_expand()
+- mm/mmap.c: 3 conflicts in vma_shrink()
+- mm/mmap.c: Conflict in __split_vma()
+- mm/mmap.c: Conflict in do_brk_flags()
