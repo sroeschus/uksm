@@ -19,6 +19,7 @@ please add some reference to this repository.
 | 6.2     | 4 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.3     | 8 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.4     | 11 hunks, difficulty: easy        | Full kernel build (1+8 CPU's)   |
+| 6.5     | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -142,3 +143,14 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/mmap.c: conflict in vma_expand()
 - mm/mmap.c: conflict in vma_merge()
 - mm/mmap.c: 2 conflicts in do_brk_flags()
+
+## 6.5
+- mm/uksm.c: use ptep_get() api in break_ksm_pmd_entry()
+- mm/uksm.c: use read-only/write pagewalks in break_ksm() and add new parameter
+- mm/uksm.c: add new parameter to unmerge_ksm_pages()
+- mm/uksm.c: use ptep_get() in write_protect_page()
+- mm/uksm.c: use pmd_get_lockless() in replace_page()
+- mm/uksm.c: use ptep_get in replace_page()
+- mm/uksm.c: add check for poison page in ksm_might_need_to_copy()
+- include/linux/mmzone.h: Fixed conflict in zone_stat_item
+- mm/mmap.c: Conflict in __split_vma()
