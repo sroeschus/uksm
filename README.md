@@ -20,6 +20,7 @@ please add some reference to this repository.
 | 6.3     | 8 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.4     | 11 hunks, difficulty: easy        | Full kernel build (1+8 CPU's)   |
 | 6.5     | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
+| 6.6     | 9 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -154,3 +155,14 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/uksm.c: add check for poison page in ksm_might_need_to_copy()
 - include/linux/mmzone.h: Fixed conflict in zone_stat_item
 - mm/mmap.c: Conflict in __split_vma()
+
+## 6.6
+mm/ksm.h: move page_stable_node from ksm.h to ksm.c/uksm.c
+mm/ksm.h: move set_page_stable_node from ksm.h to ksm.c/uksm.c
+mm/ksm.h: define ksm_might_unmap_zero_page for CONFIG_UKSM
+mm/memory.c: Conflict in zap_pte_rang()
+mm/memory.c: Conflict in wp_page_copy()
+mm/mmap.c: 2 conflicts in vma_expand()
+mm/mmap.c: 3 conflicts in vma_shrink()
+mm/mmap.c: Conflict in __split_vma()
+mm/mmap.c: Conflict in do_brk_flags()
