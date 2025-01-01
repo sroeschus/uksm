@@ -1,5 +1,5 @@
-# uksm
-The uksm were orginally maintained in [this](https://github.com/dolohow/uksm) repository.
+# Ultra Kernel Samepage Merging (aka uksm)
+The uksm patches were orginally maintained in [this](https://github.com/dolohow/uksm) repository.
 However it looks like the most recent patch has been for 5.17. This repository contains
 versions of the uksm patch for more recent versions.
 
@@ -21,6 +21,7 @@ please add some reference to this repository.
 | 6.4     | 11 hunks, difficulty: easy        | Full kernel build (1+8 CPU's)   |
 | 6.5     | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 | 6.6     | 9 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
+| 6.7     | 0 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -166,3 +167,6 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/mmap.c: 3 conflicts in vma_shrink()
 - mm/mmap.c: Conflict in __split_vma()
 - mm/mmap.c: Conflict in do_brk_flags()
+
+## 6.7
+- No conflicts
