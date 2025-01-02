@@ -22,6 +22,7 @@ please add some reference to this repository.
 | 6.5     | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 | 6.6     | 9 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 | 6.7     | 0 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
+| 6.8     | 20 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -170,3 +171,14 @@ Considerable changes in memory management due to the introduction of the maple t
 
 ## 6.7
 - No conflicts
+
+## 6.8
+- fs/exec.c: Conflicts with includes
+- include/linux/ksm.h: conflict with ksm_might_unmap_zero_page()
+- include/linux/ksm.h: also needed ksm_might_unmap_zero_page() in uksm.c
+- mm/memory.c: Conflict in wp_page_copy()
+- mm/uksm.c: in write_protect_page() replace page_try_share_anon_rmap() with folio_try_share_anon_rmap_pte()
+- mm/uksm.c: use folio in replace_page()
+- mm/uksm.c: in replace_page() replace page_add_anon_rmap() with folio_add_anon_rmap_pte()
+- mm/uksm.c: in replace_page() replace page_remove_rmap() with folio_remove_rmap_pte()
+- mm/uksm.c: many changes in ksm_might_need_to_copy() to use folio api's
