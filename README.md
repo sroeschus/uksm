@@ -25,6 +25,7 @@ please add some reference to this repository.
 | 6.8     | 20 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 | 6.9     | 5 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.10    | 6 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
+| 6.11    | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -199,3 +200,7 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/uksm.c: Rename page_set_stable_node() folio_stable_node() and switch to folios
 - mm/uksm.c: Use folios in write_protect_page()
 - mm/uksm.c: Replace set_pte_at_notify() with set_pte_at() calls
+
+## 6.11
+- mm/memory.c: Conflict in __wap_page_copy_user()
+- mm/vmstat.c: Conflict in vmstat_text[]
