@@ -24,6 +24,7 @@ please add some reference to this repository.
 | 6.7     | 0 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
 | 6.8     | 20 hunks, difficulty: med-complex | Full kernel build (1+8 CPU's)   |
 | 6.9     | 5 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
+| 6.10    | 6 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -190,3 +191,11 @@ Considerable changes in memory management due to the introduction of the maple t
 - mm/memory.c: Conflict in zap_pte_range()
 - mm/mmap.c: Conflict in vma_expand()
 - mm/mmap.c: Conflict in vma_merge()
+
+## 6.10
+- include/linux/ksm.h: Conflict with ksm_might_need_to_copy()
+- include/linux/ksm.h: Conflict with new function mm_ksm_zero_pages()
+- mm/mmap.c: Conflict in do_mmap.c
+- mm/uksm.c: Rename page_set_stable_node() folio_stable_node() and switch to folios
+- mm/uksm.c: Use folios in write_protect_page()
+- mm/uksm.c: Replace set_pte_at_notify() with set_pte_at() calls
