@@ -26,6 +26,7 @@ please add some reference to this repository.
 | 6.9     | 5 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.10    | 6 hunks, difficulty: med          | Full kernel build (1+8 CPU's)   |
 | 6.11    | 2 hunks, difficulty: easy         | Full kernel build (1+8 CPU's)   |
+| 6.12    | 6 hunks, difficulty: complex      | Full kernel build (1+8 CPU's)   |
 
 The Changes column contains the changes compared to the previous version. The
 testing column specifies how much testing has been done for this patch. Basic testing
@@ -204,3 +205,8 @@ Considerable changes in memory management due to the introduction of the maple t
 ## 6.11
 - mm/memory.c: Conflict in __wap_page_copy_user()
 - mm/vmstat.c: Conflict in vmstat_text[]
+
+## 6.12
+- mm/mmap.c: 6 conflicts
+- mm/mmap.c: Has been split in 2 files. Hunks cannot be applied automatically, requires
+             manually applying them. The new file is called vma.c.
